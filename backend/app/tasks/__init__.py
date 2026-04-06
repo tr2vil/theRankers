@@ -8,6 +8,10 @@ celery_app = Celery(
     "therankers",
     broker=settings.redis_url,
     backend=settings.redis_url,
+    include=[
+        "app.tasks.collect",
+        "app.tasks.analyze",
+    ],
 )
 
 celery_app.conf.update(
@@ -17,3 +21,6 @@ celery_app.conf.update(
     timezone="Asia/Seoul",
     enable_utc=True,
 )
+
+# Beat 스케줄 로드
+import app.tasks.schedule  # noqa: F401, E402

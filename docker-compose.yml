@@ -55,6 +55,7 @@ services:
       - DATABASE_URL=postgresql+asyncpg://therankers:${POSTGRES_PASSWORD:-therankers_dev}@postgres:5432/therankers
       - REDIS_URL=redis://redis:6379/0
       - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production}
+      - PYTHONPATH=/app
     volumes:
       - ./backend:/app
     depends_on:
@@ -62,7 +63,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: celery -A app.tasks.celery_app worker --loglevel=info
+    command: celery -A app.tasks worker --loglevel=info
 
   celery-beat:
     build:
@@ -72,6 +73,7 @@ services:
       - DATABASE_URL=postgresql+asyncpg://therankers:${POSTGRES_PASSWORD:-therankers_dev}@postgres:5432/therankers
       - REDIS_URL=redis://redis:6379/0
       - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production}
+      - PYTHONPATH=/app
     volumes:
       - ./backend:/app
     depends_on:
@@ -79,7 +81,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: celery -A app.tasks.celery_app beat --loglevel=info
+    command: celery -A app.tasks beat --loglevel=info
 
   frontend:
     build:

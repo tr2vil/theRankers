@@ -7,7 +7,7 @@
 
 ## Playwright E2E 테스트 (e2e/tests/)
 
-최종 실행: 2026-04-06 | 결과: **45/45 PASS**
+최종 실행: 2026-04-07 | 결과: **55/55 PASS**
 
 ### T01: Backend API 헬스체크 (01-backend-health.spec.ts)
 | ID | 시험 항목 | 상태 |
@@ -69,6 +69,20 @@
 | T04-16 | 게시판 - 글쓰기 폼 토글 | PASS |
 | T04-17 | 종목 - 섹터 필터 | PASS |
 | T04-18 | 종목 상세 - 애널리스트 신뢰도 테두리 | PASS |
+
+### T05: Sprint 4 Backend 기능 시험 (05-sprint4-backend.spec.ts)
+| ID | 시험 항목 | 상태 |
+|----|----------|------|
+| T05-1 | /api/v1/analysts 실제 데이터 존재 확인 | PASS |
+| T05-2 | /api/v1/rankings 실제 랭킹 데이터 + 점수 분해 필드 | PASS |
+| T05-3 | /api/v1/rankings 기간별 필터 (1m/3m/6m/12m) | PASS |
+| T05-4 | /api/v1/stocks 실제 종목 데이터 + GICS 섹터 | PASS |
+| T05-5 | /api/v1/reports 실제 리포트 데이터 + 조인 필드 | PASS |
+| T05-6 | /api/v1/boards 게시판 데이터 확인 | PASS |
+| T05-7 | /api/v1/analysts 증권사 필터 동작 | PASS |
+| T05-8 | /api/v1/reports 투자의견 필터 동작 | PASS |
+| T05-9 | 랭킹 순서 정합성 (rank 오름차순, score 내림차순) | PASS |
+| T05-10 | 스코어 합산 정합성 (4개 지표 합 = total) | PASS |
 
 ---
 

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuthStore } from "@/lib/store";
 
 const navItems = [
@@ -13,8 +13,12 @@ const navItems = [
 ];
 
 export default function Header() {
-  const { user, logout } = useAuthStore();
+  const { user, logout, hydrate } = useAuthStore();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    hydrate();
+  }, [hydrate]);
 
   return (
     <header className="sticky top-0 z-50 glass border-b border-border-secondary">
@@ -61,6 +65,8 @@ export default function Header() {
         <button
           className="md:hidden p-2 text-text-secondary"
           onClick={() => setMobileOpen(!mobileOpen)}
+          aria-label={mobileOpen ? "메뉴 닫기" : "메뉴 열기"}
+          aria-expanded={mobileOpen}
         >
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
             {mobileOpen ? (

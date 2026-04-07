@@ -12,14 +12,14 @@ test.describe("T03: Frontend 페이지 로딩 시험", () => {
   test("T03-2: 메인 페이지 - Top 애널리스트 섹션", async ({ page }) => {
     await page.goto("/");
     await expect(page.locator("text=Top 애널리스트")).toBeVisible();
-    // 랭킹 항목이 존재
     await expect(page.locator("h2:text('Top 애널리스트')")).toBeVisible();
   });
 
-  test("T03-3: 메인 페이지 - 최신 리포트 섹션", async ({ page }) => {
+  test("T03-3: 메인 페이지 - 최신 리포트 섹션 (API)", async ({ page }) => {
     await page.goto("/");
     await expect(page.locator("text=최신 리포트")).toBeVisible();
-    await expect(page.locator("text=삼성전자")).toBeVisible();
+    // Wait for API data to load - check for 목표가 text
+    await expect(page.locator("text=목표가").first()).toBeVisible({ timeout: 10000 });
   });
 
   test("T03-4: 메인 페이지 - CTA 섹션", async ({ page }) => {
@@ -27,56 +27,59 @@ test.describe("T03: Frontend 페이지 로딩 시험", () => {
     await expect(page.locator("text=무료로 시작하기")).toBeVisible();
   });
 
-  test("T03-5: 랭킹 페이지 로딩", async ({ page }) => {
+  test("T03-5: 랭킹 페이지 로딩 (API)", async ({ page }) => {
     await page.goto("/rankings");
     await expect(page.locator("h1:text('애널리스트 랭킹')")).toBeVisible();
     // 기간 선택 버튼
     await expect(page.locator("text=12개월")).toBeVisible();
-    // 랭킹 테이블 항목
-    await expect(page.locator("text=김서연")).toBeVisible();
+    // Wait for API ranking data to load
+    await expect(page.locator("text=순위").first()).toBeVisible({ timeout: 10000 });
   });
 
-  test("T03-6: 애널리스트 목록 페이지 로딩", async ({ page }) => {
+  test("T03-6: 애널리스트 목록 페이지 로딩 (API)", async ({ page }) => {
     await page.goto("/analysts");
     await expect(page.locator("h1:text('애널리스트')")).toBeVisible();
     // 검색 필드
     await expect(page.locator("input[placeholder*='검색']")).toBeVisible();
-    // 애널리스트 카드
-    await expect(page.locator("text=김서연")).toBeVisible();
+    // Wait for API data - analyst cards should appear
+    await expect(page.locator("text=종합 점수").first()).toBeVisible({ timeout: 10000 });
   });
 
-  test("T03-7: 애널리스트 상세 페이지 로딩", async ({ page }) => {
+  test("T03-7: 애널리스트 상세 페이지 로딩 (API)", async ({ page }) => {
     await page.goto("/analysts/1");
-    await expect(page.locator("h1")).toBeVisible();
+    await expect(page.locator("h1")).toBeVisible({ timeout: 10000 });
     // 점수 구성 카드
     await expect(page.locator("text=목표가 달성률")).toBeVisible();
     await expect(page.locator("text=초과수익률").first()).toBeVisible();
   });
 
-  test("T03-8: 종목 목록 페이지 로딩", async ({ page }) => {
+  test("T03-8: 종목 목록 페이지 로딩 (API)", async ({ page }) => {
     await page.goto("/stocks");
     await expect(page.locator("h1:text('종목')")).toBeVisible();
-    await expect(page.locator("text=삼성전자")).toBeVisible();
+    // Wait for API data
+    await expect(page.locator("text=삼성전자")).toBeVisible({ timeout: 10000 });
   });
 
-  test("T03-9: 종목 상세 페이지 로딩", async ({ page }) => {
+  test("T03-9: 종목 상세 페이지 로딩 (API)", async ({ page }) => {
     await page.goto("/stocks/005930");
-    await expect(page.getByRole("heading", { name: "삼성전자" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "삼성전자" })).toBeVisible({ timeout: 10000 });
     // 컨센서스 분포
     await expect(page.locator("text=투자의견 분포")).toBeVisible();
     await expect(page.locator("text=목표가 범위")).toBeVisible();
-    await expect(page.locator("text=상승 여력")).toBeVisible();
+    await expect(page.locator("text=리포트 현황")).toBeVisible();
   });
 
-  test("T03-10: 리포트 페이지 로딩", async ({ page }) => {
+  test("T03-10: 리포트 페이지 로딩 (API)", async ({ page }) => {
     await page.goto("/reports");
     await expect(page.locator("h1:text('리포트')")).toBeVisible();
     await expect(page.locator("input[placeholder*='검색']")).toBeVisible();
     // 의견 필터 버튼
     await expect(page.locator("button:text('매수')")).toBeVisible();
+    // Wait for API data
+    await expect(page.locator("text=목표가").first()).toBeVisible({ timeout: 10000 });
   });
 
-  test("T03-11: 커뮤니티 게시판 페이지 로딩", async ({ page }) => {
+  test("T03-11: 커뮤니티 게시판 페이지 로딩 (API)", async ({ page }) => {
     await page.goto("/boards/general");
     await expect(page.locator("h1")).toContainText("커뮤니티");
     await expect(page.locator("button:text('글쓰기')")).toBeVisible();

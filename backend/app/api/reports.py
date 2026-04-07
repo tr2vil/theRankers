@@ -20,6 +20,7 @@ async def list_reports(
     analyst_id: int | None = None,
     stock_id: int | None = None,
     opinion: str | None = None,
+    search: str | None = None,
     date_from: date | None = None,
     date_to: date | None = None,
     db: AsyncSession = Depends(get_db),
@@ -29,8 +30,21 @@ async def list_reports(
         .join(Analyst, Report.analyst_id == Analyst.id)
         .join(Stock, Report.stock_id == Stock.id)
     )
-    count_query = select(func.count(Report.id))
+    count_query = (
+        select(func.count(Report.id))
+        .join(Analyst, Report.analyst_id == Analyst.id)
+        .join(Stock, Report.stock_id == Stock.id)
+    )
 
+    if search:
+        pattern = f"%{search}%"
+        search_filter = (
+            Stock.name.ilike(pattern) |
+            Stock.code.ilike(pattern) |
+            Analyst.name.ilike(pattern)
+        )
+        query = query.where(search_filter)
+        count_query = count_query.where(search_filter)
     if analyst_id:
         query = query.where(Report.analyst_id == analyst_id)
         count_query = count_query.where(Report.analyst_id == analyst_id)

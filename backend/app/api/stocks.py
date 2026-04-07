@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select, func
+from sqlalchemy import select, func, case
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -66,14 +66,16 @@ async def get_stock_consensus(stock_id: int, db: AsyncSession = Depends(get_db))
     stats = await db.execute(
         select(
             func.count(Report.id),
-            func.sum(func.cast(Report.opinion == "매수", int)),
-            func.sum(func.cast(Report.opinion == "중립", int)),
-            func.sum(func.cast(Report.opinion == "매도", int)),
+            func.sum(case((Report.opinion == "매수", 1), else_=0)),
+            func.sum(case((Report.opinion == "중립", 1), else_=0)),
+            func.sum(case((Report.opinion == "매도", 1), else_=0)),
             func.avg(Report.target_price),
+            func.max(Report.target_price),
+            func.min(Report.target_price),
         ).where(Report.stock_id == stock_id)
     )
     row = stats.one()
-    total, buy, hold, sell, avg_tp = row
+    total, buy, hold, sell, avg_tp, high_tp, low_tp = row
 
     return StockConsensus(
         stock=StockResponse.model_validate(stock),
@@ -81,6 +83,8 @@ async def get_stock_consensus(stock_id: int, db: AsyncSession = Depends(get_db))
         hold_count=hold or 0,
         sell_count=sell or 0,
         avg_target_price=avg_tp or 0,
+        high_target_price=high_tp,
+        low_target_price=low_tp,
         current_price=None,
         report_count=total or 0,
     )

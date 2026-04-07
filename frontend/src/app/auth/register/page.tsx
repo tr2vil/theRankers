@@ -3,11 +3,16 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { authAPI } from "@/lib/api";
+import { useAuthStore } from "@/lib/store";
+import type { TokenResponse, User } from "@/types";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { setAuth } = useAuthStore();
   const [form, setForm] = useState({ email: "", username: "", password: "", confirmPassword: "" });
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   function update(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -26,27 +31,20 @@ export default function RegisterPage() {
       return;
     }
 
+    setLoading(true);
     try {
-      const res = await fetch("/api/v1/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: form.email,
-          username: form.username,
-          password: form.password,
-        }),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        setError(data.detail || "회원가입에 실패했습니다.");
-        return;
-      }
-      const tokens = await res.json();
-      localStorage.setItem("access_token", tokens.access_token);
-      localStorage.setItem("refresh_token", tokens.refresh_token);
+      const tokens = await authAPI.register({
+        email: form.email,
+        username: form.username,
+        password: form.password,
+      }) as TokenResponse;
+      const user = await authAPI.me(tokens.access_token) as User;
+      setAuth(tokens, user);
       router.push("/");
-    } catch {
-      setError("서버에 연결할 수 없습니다.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "회원가입에 실패했습니다.");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -115,9 +113,10 @@ export default function RegisterPage() {
 
           <button
             type="submit"
-            className="w-full rounded-apple bg-text-primary text-white py-3 text-body font-medium hover:bg-text-secondary transition-colors"
+            disabled={loading}
+            className="w-full rounded-apple bg-text-primary text-white py-3 text-body font-medium hover:bg-text-secondary transition-colors disabled:opacity-50"
           >
-            가입하기
+            {loading ? "가입 중..." : "가입하기"}
           </button>
         </form>
 

@@ -7,7 +7,7 @@
 
 ## Playwright E2E 테스트 (e2e/tests/)
 
-최종 실행: 2026-04-07 | 결과: **55/55 PASS**
+최종 실행: 2026-04-07 | 결과: **65/65 PASS**
 
 ### T01: Backend API 헬스체크 (01-backend-health.spec.ts)
 | ID | 시험 항목 | 상태 |
@@ -83,6 +83,22 @@
 | T05-8 | /api/v1/reports 투자의견 필터 동작 | PASS |
 | T05-9 | 랭킹 순서 정합성 (rank 오름차순, score 내림차순) | PASS |
 | T05-10 | 스코어 합산 정합성 (4개 지표 합 = total) | PASS |
+
+---
+
+### T06: Sprint 5 API 연동 시험 (06-sprint5-api-integration.spec.ts)
+| ID | 시험 항목 | 상태 |
+|----|----------|------|
+| T06-1 | 메인 대시보드 - 랭킹 API 데이터 렌더링 | PASS |
+| T06-2 | 메인 대시보드 - 리포트 API 데이터 렌더링 | PASS |
+| T06-3 | 랭킹 페이지 - API 데이터 + 기간 전환 | PASS |
+| T06-4 | 애널리스트 상세 - API 데이터 로딩 | PASS |
+| T06-5 | 종목 상세 - Consensus API 데이터 | PASS |
+| T06-6 | 리포트 페이지 - 페이지네이션 | PASS |
+| T06-7 | 종목 페이지 - 검색 필터 API 연동 | PASS |
+| T06-8 | 게시판 - 보드 탭 API 연동 | PASS |
+| T06-9 | Backend consensus API 정상 응답 | PASS |
+| T06-10 | Backend reports 검색 API 동작 | PASS |
 
 ---
 

@@ -28,5 +28,7 @@ class StockConsensus(BaseModel):
     hold_count: int
     sell_count: int
     avg_target_price: float
+    high_target_price: int | None
+    low_target_price: int | None
     current_price: int | None
     report_count: int

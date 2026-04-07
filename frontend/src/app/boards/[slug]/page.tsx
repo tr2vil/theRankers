@@ -1,19 +1,75 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { boardAPI } from "@/lib/api";
+import { useAuthStore } from "@/lib/store";
+import type { Post } from "@/types";
 
-const demoPosts = [
-  { id: 1, title: "삼성전자 목표가 10만원 가능할까요?", author: "투자고수", comments: 23, views: 456, likes: 12, date: "2026-04-05 14:30" },
-  { id: 2, title: "김서연 애널리스트 반도체 전망 리포트 분석", author: "반도체매니아", comments: 15, views: 312, likes: 28, date: "2026-04-05 12:15" },
-  { id: 3, title: "메리츠증권 리서치 퀄리티가 좋아진 느낌", author: "가치투자자", comments: 8, views: 189, likes: 5, date: "2026-04-04 18:45" },
-  { id: 4, title: "애널리스트 매수 의견만 내는 이유가 뭔가요?", author: "주린이", comments: 31, views: 782, likes: 45, date: "2026-04-04 10:20" },
-  { id: 5, title: "theRankers 점수 상위 애널리스트 추천 종목 모음", author: "데이터분석러", comments: 42, views: 1203, likes: 67, date: "2026-04-03 16:00" },
-  { id: 6, title: "2분기 실적 시즌 앞두고 주목할 리포트", author: "시장관찰자", comments: 11, views: 298, likes: 18, date: "2026-04-03 09:30" },
-];
+interface Board {
+  id: number;
+  slug: string;
+  name: string;
+  board_type: string;
+  post_count: number;
+}
 
 export default function BoardPage() {
+  const params = useParams();
+  const router = useRouter();
+  const slug = params.slug as string;
+  const { accessToken } = useAuthStore();
+
+  const [boards, setBoards] = useState<Board[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showWrite, setShowWrite] = useState(false);
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [writeError, setWriteError] = useState("");
+
+  useEffect(() => {
+    async function load() {
+      setLoading(true);
+      try {
+        const [boardList, postList] = await Promise.all([
+          boardAPI.list() as Promise<Board[]>,
+          boardAPI.posts(slug) as Promise<{ items: Post[]; total: number } | Post[]>,
+        ]);
+        setBoards(boardList);
+        const items = Array.isArray(postList) ? postList : postList.items;
+        setPosts(items);
+      } catch {
+        setPosts([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    if (slug) load();
+  }, [slug]);
+
+  async function handleSubmit() {
+    if (!title.trim() || !content.trim() || !accessToken) return;
+    setSubmitting(true);
+    setWriteError("");
+    try {
+      await boardAPI.createPost(slug, { title, content }, accessToken);
+      setTitle("");
+      setContent("");
+      setShowWrite(false);
+      const postList = await boardAPI.posts(slug) as { items: Post[]; total: number } | Post[];
+      const items = Array.isArray(postList) ? postList : postList.items;
+      setPosts(items);
+    } catch {
+      setWriteError("게시글 작성에 실패했습니다. 로그인 상태를 확인해주세요.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  const boardTabs = boards.length > 0 ? boards : [];
 
   return (
     <div className="py-16">
@@ -26,7 +82,13 @@ export default function BoardPage() {
             </p>
           </div>
           <button
-            onClick={() => setShowWrite(!showWrite)}
+            onClick={() => {
+              if (!accessToken) {
+                router.push("/auth/login");
+                return;
+              }
+              setShowWrite(!showWrite);
+            }}
             className="rounded-full bg-text-primary px-5 py-2.5 text-body text-white hover:bg-text-secondary transition-colors"
           >
             글쓰기
@@ -35,30 +97,41 @@ export default function BoardPage() {
 
         {/* Board tabs */}
         <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-1">
-          {["자유게시판", "종목토론", "애널리스트 평가", "증권사 리뷰"].map((tab, i) => (
-            <button
-              key={tab}
+          {boardTabs.map((board) => (
+            <Link
+              key={board.slug}
+              href={`/boards/${board.slug}`}
               className={`shrink-0 px-4 py-2 rounded-full text-body transition-colors ${
-                i === 0
+                board.slug === slug
                   ? "bg-text-primary text-white"
                   : "bg-surface-secondary text-text-secondary hover:bg-border-secondary"
               }`}
             >
-              {tab}
-            </button>
+              {board.name}
+            </Link>
           ))}
         </div>
 
         {/* Write form */}
         {showWrite && (
           <div className="bg-white rounded-apple-lg p-6 shadow-apple mb-6">
+            {writeError && (
+              <div className="rounded-apple bg-accent-red/10 px-4 py-3 text-body text-accent-red mb-4">
+                {writeError}
+              </div>
+            )}
             <input
               type="text"
               placeholder="제목을 입력하세요"
+              aria-label="게시글 제목"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
               className="w-full text-title text-text-primary placeholder:text-text-tertiary outline-none mb-4"
             />
             <textarea
               placeholder="내용을 입력하세요"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
               rows={4}
               className="w-full rounded-apple bg-surface-secondary px-4 py-3 text-body text-text-primary placeholder:text-text-tertiary outline-none resize-none focus:ring-2 focus:ring-accent-blue/30 mb-4"
             />
@@ -69,55 +142,65 @@ export default function BoardPage() {
               >
                 취소
               </button>
-              <button className="px-5 py-2 rounded-full bg-accent-blue text-white text-body hover:bg-accent-blue-hover transition-colors">
-                게시
+              <button
+                onClick={handleSubmit}
+                disabled={submitting || !title.trim() || !content.trim()}
+                className="px-5 py-2 rounded-full bg-accent-blue text-white text-body hover:bg-accent-blue-hover transition-colors disabled:opacity-40"
+              >
+                {submitting ? "게시 중..." : "게시"}
               </button>
             </div>
           </div>
         )}
 
         {/* Posts list */}
-        <div className="bg-white rounded-apple-xl shadow-apple overflow-hidden">
-          {demoPosts.map((post) => (
-            <div
-              key={post.id}
-              className="px-6 py-4 border-b border-border-secondary last:border-0 hover:bg-surface-tertiary transition-colors cursor-pointer"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-body-lg font-medium text-text-primary truncate hover:text-accent-blue transition-colors">
-                    {post.title}
-                  </h3>
-                  <div className="flex items-center gap-3 mt-1.5 text-caption text-text-tertiary">
-                    <span>{post.author}</span>
-                    <span>{post.date}</span>
+        {loading ? (
+          <div className="text-center py-16 text-text-tertiary">로딩 중...</div>
+        ) : posts.length === 0 ? (
+          <div className="text-center py-16 text-text-tertiary">게시글이 없습니다. 첫 번째 글을 작성해보세요!</div>
+        ) : (
+          <div className="bg-white rounded-apple-xl shadow-apple overflow-hidden">
+            {posts.map((post) => (
+              <div
+                key={post.id}
+                className="px-6 py-4 border-b border-border-secondary last:border-0 hover:bg-surface-tertiary transition-colors cursor-pointer"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-body-lg font-medium text-text-primary truncate hover:text-accent-blue transition-colors">
+                      {post.title}
+                    </h3>
+                    <div className="flex items-center gap-3 mt-1.5 text-caption text-text-tertiary">
+                      <span>{post.author_display_name || post.author_username}</span>
+                      <span>{new Date(post.created_at).toLocaleDateString("ko-KR")}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 text-caption text-text-tertiary shrink-0">
+                    <span className="flex items-center gap-1">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                      {post.view_count}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                      </svg>
+                      {post.comment_count}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+                      </svg>
+                      {post.like_count}
+                    </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-4 text-caption text-text-tertiary shrink-0">
-                  <span className="flex items-center gap-1">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                      <circle cx="12" cy="12" r="3" />
-                    </svg>
-                    {post.views}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-                    </svg>
-                    {post.comments}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
-                    </svg>
-                    {post.likes}
-                  </span>
-                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

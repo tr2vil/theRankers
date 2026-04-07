@@ -87,6 +87,25 @@ export interface PaginatedResponse<T> {
   size: number;
 }
 
+export interface StockConsensus {
+  stock: Stock;
+  buy_count: number;
+  hold_count: number;
+  sell_count: number;
+  avg_target_price: number;
+  high_target_price: number | null;
+  low_target_price: number | null;
+  current_price: number | null;
+  report_count: number;
+}
+
+export interface RankingResponse {
+  period: string;
+  calculated_at: string | null;
+  items: RankingEntry[];
+  total: number;
+}
+
 export interface TokenResponse {
   access_token: string;
   refresh_token: string;

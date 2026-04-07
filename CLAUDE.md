@@ -275,8 +275,9 @@ theRankers/
 | DB 모델 9개 + Alembic 마이그레이션 | 구현 완료 |
 | Auth API (JWT) | 구현 완료 |
 | 핵심 API 6개 (analysts, reports, stocks, rankings, boards, auth) | 구현 완료 |
-| Frontend 10개 페이지 (Apple 스타일) | 구현 완료 (데모 데이터) |
-| Playwright E2E 테스트 45건 | 구현 완료 (ALL PASS) |
-| 데이터 수집 파이프라인 | **미구현** |
-| 스코어링 엔진 | **미구현** |
-| 실제 데이터 연동 | **미구현** |
+| Frontend 10개 페이지 (Apple 스타일) | 구현 완료 (API 연동) |
+| Playwright E2E 테스트 65건 | 구현 완료 (ALL PASS) |
+| 데이터 수집 파이프라인 | 구현 완료 |
+| 스코어링 엔진 | 구현 완료 |
+| Frontend API 연동 | 구현 완료 |
+| 실제 데이터 연동 | **미구현** (가짜 데이터 → 실제 데이터 전환) |

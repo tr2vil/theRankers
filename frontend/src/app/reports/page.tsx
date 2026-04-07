@@ -1,17 +1,8 @@
 "use client";
 
-import { useState } from "react";
-
-const demoReports = [
-  { id: 1, analyst: "김서연", firm: "미래에셋", stock: "삼성전자", code: "005930", opinion: "매수" as const, targetPrice: 95000, prevTarget: 90000, date: "2026-04-05" },
-  { id: 2, analyst: "박준혁", firm: "삼성증권", stock: "셀트리온", code: "068270", opinion: "매수" as const, targetPrice: 280000, prevTarget: 260000, date: "2026-04-05" },
-  { id: 3, analyst: "이수진", firm: "KB증권", stock: "카카오뱅크", code: "323410", opinion: "중립" as const, targetPrice: 32000, prevTarget: 35000, date: "2026-04-04" },
-  { id: 4, analyst: "정민우", firm: "한투증권", stock: "네이버", code: "035420", opinion: "매수" as const, targetPrice: 320000, prevTarget: 300000, date: "2026-04-04" },
-  { id: 5, analyst: "최하영", firm: "대신증권", stock: "현대차", code: "005380", opinion: "매수" as const, targetPrice: 290000, prevTarget: 270000, date: "2026-04-03" },
-  { id: 6, analyst: "한지민", firm: "NH투자", stock: "LG화학", code: "051910", opinion: "매도" as const, targetPrice: 350000, prevTarget: 400000, date: "2026-04-03" },
-  { id: 7, analyst: "오태현", firm: "메리츠", stock: "현대중공업", code: "329180", opinion: "매수" as const, targetPrice: 180000, prevTarget: 160000, date: "2026-04-02" },
-  { id: 8, analyst: "윤서아", firm: "키움증권", stock: "카카오", code: "035720", opinion: "매수" as const, targetPrice: 85000, prevTarget: 80000, date: "2026-04-02" },
-];
+import { useEffect, useState, useCallback } from "react";
+import { reportAPI } from "@/lib/api";
+import type { Report, PaginatedResponse } from "@/types";
 
 function opinionStyle(opinion: string) {
   if (opinion === "매수") return "bg-accent-green/10 text-accent-green";
@@ -20,14 +11,42 @@ function opinionStyle(opinion: string) {
 }
 
 export default function ReportsPage() {
+  const [reports, setReports] = useState<Report[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
   const [opinion, setOpinion] = useState("전체");
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
 
-  const filtered = demoReports.filter((r) => {
-    if (opinion !== "전체" && r.opinion !== opinion) return false;
-    if (search && !r.stock.includes(search) && !r.analyst.includes(search) && !r.code.includes(search)) return false;
-    return true;
-  });
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params: Record<string, string> = { page: String(page), size: "20" };
+      if (opinion !== "전체") params.opinion = opinion;
+      if (search) params.search = search;
+      const data = await reportAPI.list(params) as PaginatedResponse<Report>;
+      setReports(data.items);
+      setTotal(data.total);
+    } catch {
+      setReports([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, opinion, search]);
+
+  useEffect(() => { load(); }, [load]);
+
+  function handleOpinionChange(op: string) {
+    setOpinion(op);
+    setPage(1);
+  }
+
+  function handleSearchChange(val: string) {
+    setSearch(val);
+    setPage(1);
+  }
+
+  const totalPages = Math.ceil(total / 20);
 
   return (
     <div className="py-16">
@@ -41,15 +60,16 @@ export default function ReportsPage() {
           <input
             type="text"
             placeholder="종목명, 애널리스트, 코드 검색"
+            aria-label="리포트 검색"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="rounded-apple bg-surface-secondary px-4 py-2.5 text-body text-text-primary placeholder:text-text-tertiary outline-none focus:ring-2 focus:ring-accent-blue/30 w-full md:w-80"
           />
           <div className="flex items-center gap-2">
             {["전체", "매수", "중립", "매도"].map((op) => (
               <button
                 key={op}
-                onClick={() => setOpinion(op)}
+                onClick={() => handleOpinionChange(op)}
                 className={`px-4 py-2 rounded-full text-body transition-colors ${
                   opinion === op
                     ? "bg-text-primary text-white"
@@ -62,45 +82,76 @@ export default function ReportsPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-apple-xl shadow-apple overflow-hidden">
-          <div className="grid grid-cols-[1fr_140px_80px_140px_100px] gap-4 px-6 py-3 border-b border-border-secondary text-caption text-text-tertiary font-medium">
-            <span>종목</span>
-            <span>애널리스트</span>
-            <span>의견</span>
-            <span className="text-right">목표가</span>
-            <span className="text-right">날짜</span>
-          </div>
-          {filtered.map((report) => {
-            const change = report.targetPrice - (report.prevTarget || report.targetPrice);
-            return (
-              <div
-                key={report.id}
-                className="grid grid-cols-[1fr_140px_80px_140px_100px] gap-4 px-6 py-4 items-center border-b border-border-secondary last:border-0 hover:bg-surface-tertiary transition-colors"
-              >
-                <div>
-                  <span className="text-body font-semibold text-text-primary">{report.stock}</span>
-                  <span className="text-caption text-text-tertiary ml-2">{report.code}</span>
-                </div>
-                <div>
-                  <span className="text-body text-text-primary">{report.analyst}</span>
-                  <span className="text-caption text-text-tertiary block">{report.firm}</span>
-                </div>
-                <span className={`inline-flex px-2.5 py-0.5 rounded-full text-caption font-semibold w-fit ${opinionStyle(report.opinion)}`}>
-                  {report.opinion}
-                </span>
-                <div className="text-right">
-                  <span className="text-body font-medium text-text-primary">{report.targetPrice.toLocaleString()}원</span>
-                  {change !== 0 && (
-                    <span className={`text-caption block ${change > 0 ? "text-accent-green" : "text-accent-red"}`}>
-                      {change > 0 ? "+" : ""}{change.toLocaleString()}
-                    </span>
-                  )}
-                </div>
-                <span className="text-body text-text-tertiary text-right">{report.date}</span>
+        {loading ? (
+          <div className="text-center py-16 text-text-tertiary">로딩 중...</div>
+        ) : reports.length === 0 ? (
+          <div className="text-center py-16 text-text-tertiary">해당하는 리포트가 없습니다.</div>
+        ) : (
+          <>
+            <div className="bg-white rounded-apple-xl shadow-apple overflow-x-auto">
+              <div className="grid grid-cols-[1fr_140px_80px_140px_100px] gap-4 px-6 py-3 border-b border-border-secondary text-caption text-text-tertiary font-medium min-w-[600px]">
+                <span>종목</span>
+                <span>애널리스트</span>
+                <span>의견</span>
+                <span className="text-right">목표가</span>
+                <span className="text-right">날짜</span>
               </div>
-            );
-          })}
-        </div>
+              {reports.map((report) => {
+                const change = report.previous_target_price
+                  ? report.target_price - report.previous_target_price
+                  : 0;
+                return (
+                  <div
+                    key={report.id}
+                    className="grid grid-cols-[1fr_140px_80px_140px_100px] gap-4 px-6 py-4 items-center border-b border-border-secondary last:border-0 hover:bg-surface-tertiary transition-colors min-w-[600px]"
+                  >
+                    <div>
+                      <span className="text-body font-semibold text-text-primary">{report.stock_name}</span>
+                      <span className="text-caption text-text-tertiary ml-2">{report.stock_code}</span>
+                    </div>
+                    <div>
+                      <span className="text-body text-text-primary">{report.analyst_name}</span>
+                      <span className="text-caption text-text-tertiary block">{report.analyst_firm}</span>
+                    </div>
+                    <span className={`inline-flex px-2.5 py-0.5 rounded-full text-caption font-semibold w-fit ${opinionStyle(report.opinion)}`}>
+                      {report.opinion}
+                    </span>
+                    <div className="text-right">
+                      <span className="text-body font-medium text-text-primary">{report.target_price.toLocaleString()}원</span>
+                      {change !== 0 && (
+                        <span className={`text-caption block ${change > 0 ? "text-accent-green" : "text-accent-red"}`}>
+                          {change > 0 ? "+" : ""}{change.toLocaleString()}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-body text-text-tertiary text-right">{report.report_date}</span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-8">
+                <button
+                  onClick={() => setPage(Math.max(1, page - 1))}
+                  disabled={page === 1}
+                  className="px-4 py-2 rounded-full text-body bg-surface-secondary text-text-secondary hover:bg-border-secondary transition-colors disabled:opacity-40"
+                >
+                  이전
+                </button>
+                <span className="text-body text-text-tertiary px-4">{page} / {totalPages}</span>
+                <button
+                  onClick={() => setPage(Math.min(totalPages, page + 1))}
+                  disabled={page === totalPages}
+                  className="px-4 py-2 rounded-full text-body bg-surface-secondary text-text-secondary hover:bg-border-secondary transition-colors disabled:opacity-40"
+                >
+                  다음
+                </button>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

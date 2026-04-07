@@ -94,52 +94,90 @@ export default function RankingsPage() {
         ) : rankings.length === 0 ? (
           <div className="text-center py-16 text-text-tertiary">해당 기간의 랭킹 데이터가 없습니다.</div>
         ) : (
-          <div className="bg-white rounded-apple-xl shadow-apple overflow-x-auto">
-            {/* Header row */}
-            <div className="grid grid-cols-[60px_1fr_120px_280px_80px_80px] gap-4 px-6 py-3 border-b border-border-secondary text-caption text-text-tertiary font-medium min-w-[700px]">
-              <span>순위</span>
-              <span>애널리스트</span>
-              <span className="text-right">종합 점수</span>
-              <span>점수 구성</span>
-              <span className="text-right">리포트</span>
-              <span className="text-right">적중률</span>
+          <>
+            {/* Desktop table */}
+            <div className="hidden md:block bg-white rounded-apple-xl shadow-apple overflow-x-auto">
+              <div className="grid grid-cols-[60px_1fr_120px_280px_80px_80px] gap-4 px-6 py-3 border-b border-border-secondary text-caption text-text-tertiary font-medium">
+                <span>순위</span>
+                <span>애널리스트</span>
+                <span className="text-right">종합 점수</span>
+                <span>점수 구성</span>
+                <span className="text-right">리포트</span>
+                <span className="text-right">적중률</span>
+              </div>
+              {rankings.map((entry) => (
+                <Link
+                  key={entry.analyst_id}
+                  href={`/analysts/${entry.analyst_id}`}
+                  className="grid grid-cols-[60px_1fr_120px_280px_80px_80px] gap-4 px-6 py-4 items-center border-b border-border-secondary last:border-0 hover:bg-surface-tertiary transition-colors group"
+                >
+                  <span className="text-title text-text-tertiary text-center">{entry.rank}</span>
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-10 h-10 rounded-full bg-surface-secondary flex items-center justify-center ring-[3px] ring-offset-2 ring-offset-white shrink-0 ${getTrustRing(entry.score)}`}
+                    >
+                      <span className="text-body font-semibold text-text-secondary">{entry.analyst_name.charAt(0)}</span>
+                    </div>
+                    <div>
+                      <div className="text-body font-semibold text-text-primary group-hover:text-accent-blue transition-colors">
+                        {entry.analyst_name}
+                      </div>
+                      <div className="text-caption text-text-tertiary">{entry.analyst_firm}</div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-title text-text-primary">{entry.score.toFixed(1)}</span>
+                  </div>
+                  <div className="flex items-center gap-0.5 h-5">
+                    <div className="bg-accent-blue/80 h-full rounded-l" style={scoreBg(entry.target_hit_score, 100)} />
+                    <div className="bg-accent-green/80 h-full" style={scoreBg(entry.excess_return_score, 100)} />
+                    <div className="bg-accent-orange/80 h-full" style={scoreBg(entry.direction_accuracy_score, 100)} />
+                    <div className="bg-text-tertiary/40 h-full rounded-r" style={scoreBg(entry.consistency_score, 100)} />
+                  </div>
+                  <span className="text-body text-text-secondary text-right">{entry.total_reports}건</span>
+                  <span className="text-body font-medium text-text-primary text-right">{entry.accuracy_rate.toFixed(1)}%</span>
+                </Link>
+              ))}
             </div>
 
-            {/* Rows */}
-            {rankings.map((entry) => (
-              <Link
-                key={entry.analyst_id}
-                href={`/analysts/${entry.analyst_id}`}
-                className="grid grid-cols-[60px_1fr_120px_280px_80px_80px] gap-4 px-6 py-4 items-center border-b border-border-secondary last:border-0 hover:bg-surface-tertiary transition-colors group min-w-[700px]"
-              >
-                <span className="text-title text-text-tertiary text-center">{entry.rank}</span>
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-10 h-10 rounded-full bg-surface-secondary flex items-center justify-center ring-[3px] ring-offset-2 ring-offset-white shrink-0 ${getTrustRing(entry.score)}`}
-                  >
-                    <span className="text-body font-semibold text-text-secondary">{entry.analyst_name.charAt(0)}</span>
-                  </div>
-                  <div>
-                    <div className="text-body font-semibold text-text-primary group-hover:text-accent-blue transition-colors">
-                      {entry.analyst_name}
+            {/* Mobile cards */}
+            <div className="md:hidden grid gap-3">
+              {rankings.map((entry) => (
+                <Link
+                  key={entry.analyst_id}
+                  href={`/analysts/${entry.analyst_id}`}
+                  className="bg-white rounded-apple-lg p-4 shadow-apple hover:shadow-apple-md transition-all"
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="text-title text-text-tertiary w-6">{entry.rank}</span>
+                    <div
+                      className={`w-10 h-10 rounded-full bg-surface-secondary flex items-center justify-center ring-[3px] ring-offset-2 ring-offset-white shrink-0 ${getTrustRing(entry.score)}`}
+                    >
+                      <span className="text-body font-semibold text-text-secondary">{entry.analyst_name.charAt(0)}</span>
                     </div>
-                    <div className="text-caption text-text-tertiary">{entry.analyst_firm}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-body font-semibold text-text-primary">{entry.analyst_name}</div>
+                      <div className="text-caption text-text-tertiary">{entry.analyst_firm}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-title text-text-primary">{entry.score.toFixed(1)}</div>
+                      <div className="text-caption text-text-tertiary">점</div>
+                    </div>
                   </div>
-                </div>
-                <div className="text-right">
-                  <span className="text-title text-text-primary">{entry.score.toFixed(1)}</span>
-                </div>
-                <div className="flex items-center gap-0.5 h-5">
-                  <div className="bg-accent-blue/80 h-full rounded-l" style={scoreBg(entry.target_hit_score, 100)} />
-                  <div className="bg-accent-green/80 h-full" style={scoreBg(entry.excess_return_score, 100)} />
-                  <div className="bg-accent-orange/80 h-full" style={scoreBg(entry.direction_accuracy_score, 100)} />
-                  <div className="bg-text-tertiary/40 h-full rounded-r" style={scoreBg(entry.consistency_score, 100)} />
-                </div>
-                <span className="text-body text-text-secondary text-right">{entry.total_reports}건</span>
-                <span className="text-body font-medium text-text-primary text-right">{entry.accuracy_rate.toFixed(1)}%</span>
-              </Link>
-            ))}
-          </div>
+                  <div className="flex items-center gap-0.5 h-3 mb-2">
+                    <div className="bg-accent-blue/80 h-full rounded-l" style={scoreBg(entry.target_hit_score, 100)} />
+                    <div className="bg-accent-green/80 h-full" style={scoreBg(entry.excess_return_score, 100)} />
+                    <div className="bg-accent-orange/80 h-full" style={scoreBg(entry.direction_accuracy_score, 100)} />
+                    <div className="bg-text-tertiary/40 h-full rounded-r" style={scoreBg(entry.consistency_score, 100)} />
+                  </div>
+                  <div className="flex justify-between text-caption text-text-tertiary">
+                    <span>리포트 {entry.total_reports}건</span>
+                    <span>적중률 {entry.accuracy_rate.toFixed(1)}%</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>

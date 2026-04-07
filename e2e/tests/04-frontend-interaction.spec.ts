@@ -68,6 +68,20 @@ test.describe("T04: Frontend 인터랙션 시험", () => {
     await expect(page).toHaveURL(/\/auth\/login/);
   });
 
+  test("T04-20: 헤더 - 글로벌 검색", async ({ page }) => {
+    await page.goto("/");
+    // Click search button
+    await page.click("button[aria-label='검색']");
+    // Search input should appear
+    const searchInput = page.locator("input[aria-label='통합 검색']");
+    await expect(searchInput).toBeVisible();
+    // Type and search
+    await searchInput.fill("삼성");
+    await page.waitForTimeout(500);
+    // Should show search results
+    await expect(page.locator("text=종목").last()).toBeVisible({ timeout: 5000 });
+  });
+
   test("T04-12: 랭킹 페이지 - 기간 선택 변경", async ({ page }) => {
     await page.goto("/rankings");
     // Wait for data to load first
@@ -141,7 +155,7 @@ test.describe("T04: Frontend 인터랙션 시험", () => {
   test("T04-18: 종목 상세 - 애널리스트 신뢰도 테두리 표시", async ({ page }) => {
     await page.goto("/stocks/005930");
     // 신뢰도 설명 텍스트
-    await expect(page.locator("text=아이콘 테두리 색상은 애널리스트 신뢰도를 나타냅니다")).toBeVisible({ timeout: 10000 });
+    await expect(page.locator("text=테두리 색상은 신뢰도")).toBeVisible({ timeout: 10000 });
     // 애널리스트 의견 목록 (at least one entry with 매수 badge)
     await expect(page.locator("text=매수").first()).toBeVisible();
   });

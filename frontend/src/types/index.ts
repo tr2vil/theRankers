@@ -99,6 +99,12 @@ export interface ReportDetail extends Report {
   source_url: string | null;
 }
 
+export interface PricePoint {
+  date: string;
+  close_price: number;
+  volume: number;
+}
+
 export interface StockConsensus {
   stock: Stock;
   buy_count: number;

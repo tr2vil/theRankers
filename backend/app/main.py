@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
-from app.api import auth, analysts, reports, stocks, rankings, boards
+from app.api import auth, analysts, reports, stocks, rankings, boards, search
 
 settings = get_settings()
 
@@ -35,6 +35,7 @@ app.include_router(reports.router, prefix="/api/v1/reports", tags=["reports"])
 app.include_router(stocks.router, prefix="/api/v1/stocks", tags=["stocks"])
 app.include_router(rankings.router, prefix="/api/v1/rankings", tags=["rankings"])
 app.include_router(boards.router, prefix="/api/v1/boards", tags=["boards"])
+app.include_router(search.router, prefix="/api/v1/search", tags=["search"])
 
 
 @app.get("/health")

@@ -60,13 +60,16 @@ test.describe("T03: Frontend 페이지 로딩 시험", () => {
     await expect(page.locator("text=삼성전자")).toBeVisible({ timeout: 10000 });
   });
 
-  test("T03-9: 종목 상세 페이지 로딩 (API)", async ({ page }) => {
+  test("T03-9: 종목 상세 페이지 로딩 (API) + 주가 차트", async ({ page }) => {
     await page.goto("/stocks/005930");
     await expect(page.getByRole("heading", { name: "삼성전자" })).toBeVisible({ timeout: 10000 });
+    // 주가 차트
+    await expect(page.locator("text=주가 추이")).toBeVisible();
     // 컨센서스 분포
     await expect(page.locator("text=투자의견 분포")).toBeVisible();
     await expect(page.locator("text=목표가 범위")).toBeVisible();
-    await expect(page.locator("text=리포트 현황")).toBeVisible();
+    // 애널리스트별 목표가 차트
+    await expect(page.locator("text=애널리스트별 목표가")).toBeVisible();
   });
 
   test("T03-10: 리포트 페이지 로딩 (API)", async ({ page }) => {

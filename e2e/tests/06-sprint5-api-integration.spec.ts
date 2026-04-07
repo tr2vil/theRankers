@@ -50,7 +50,7 @@ test.describe("T06: Sprint 5 - Frontend API 연동 시험", () => {
     // Buy count should be visible (green bar)
     await expect(page.locator(".bg-accent-green").first()).toBeVisible();
     // Target price range
-    await expect(page.locator("text=평균")).toBeVisible();
+    await expect(page.locator("text=평균").first()).toBeVisible();
   });
 
   test("T06-6: 리포트 페이지 - 페이지네이션", async ({ page }) => {
@@ -121,6 +121,25 @@ test.describe("T06: Sprint 5 - Frontend API 연동 시험", () => {
     expect(data).toHaveProperty("analyst_name");
     expect(data).toHaveProperty("stock_name");
     expect(data).toHaveProperty("target_price");
+  });
+
+  test("T06-12: Backend 주가 API 응답", async ({ request }) => {
+    const response = await request.get("http://localhost:8000/api/v1/stocks/1/prices?days=10");
+    expect(response.status()).toBe(200);
+    const data = await response.json();
+    expect(data.length).toBeGreaterThan(0);
+    expect(data[0]).toHaveProperty("date");
+    expect(data[0]).toHaveProperty("close_price");
+    expect(data[0]).toHaveProperty("volume");
+  });
+
+  test("T06-13: Backend 통합 검색 API 동작", async ({ request }) => {
+    const response = await request.get("http://localhost:8000/api/v1/search?q=%EC%82%BC%EC%84%B1");
+    expect(response.status()).toBe(200);
+    const data = await response.json();
+    expect(data.results.length).toBeGreaterThan(0);
+    expect(data.results[0]).toHaveProperty("type");
+    expect(data.results[0]).toHaveProperty("name");
   });
 
   test("T06-10: Backend reports 검색 API 동작", async ({ request }) => {

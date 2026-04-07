@@ -67,6 +67,7 @@ export const stockAPI = {
   },
   get: (id: number) => fetchAPI(`/api/v1/stocks/${id}`),
   consensus: (id: number) => fetchAPI(`/api/v1/stocks/${id}/consensus`),
+  prices: (id: number, days: number = 30) => fetchAPI(`/api/v1/stocks/${id}/prices?days=${days}`),
 };
 
 // Rankings
@@ -75,6 +76,11 @@ export const rankingAPI = {
     const qs = params ? "?" + new URLSearchParams(params).toString() : "";
     return fetchAPI(`/api/v1/rankings${qs}`);
   },
+};
+
+// Search
+export const searchAPI = {
+  search: (q: string) => fetchAPI(`/api/v1/search?q=${encodeURIComponent(q)}`),
 };
 
 // Boards

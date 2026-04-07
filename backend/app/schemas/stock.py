@@ -3,6 +3,14 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
+class PricePoint(BaseModel):
+    date: datetime
+    close_price: int
+    volume: int
+
+    model_config = {"from_attributes": True}
+
+
 class StockResponse(BaseModel):
     id: int
     code: str

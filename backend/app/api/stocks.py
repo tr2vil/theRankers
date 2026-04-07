@@ -5,7 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.models.stock import Stock
 from app.models.report import Report
-from app.schemas.stock import StockResponse, StockListResponse, StockConsensus
+from app.models.price import Price
+from app.schemas.stock import StockResponse, StockListResponse, StockConsensus, PricePoint
 
 router = APIRouter()
 
@@ -53,6 +54,26 @@ async def get_stock(stock_id: int, db: AsyncSession = Depends(get_db)):
     if not stock:
         raise HTTPException(status_code=404, detail="Stock not found")
     return StockResponse.model_validate(stock)
+
+
+@router.get("/{stock_id}/prices", response_model=list[PricePoint])
+async def get_stock_prices(
+    stock_id: int,
+    days: int = Query(30, ge=1, le=365),
+    db: AsyncSession = Depends(get_db),
+):
+    stock_exists = await db.execute(select(Stock.id).where(Stock.id == stock_id))
+    if not stock_exists.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Stock not found")
+
+    result = await db.execute(
+        select(Price)
+        .where(Price.stock_id == stock_id)
+        .order_by(Price.date.desc())
+        .limit(days)
+    )
+    prices = list(reversed(result.scalars().all()))
+    return [PricePoint.model_validate(p) for p in prices]
 
 
 @router.get("/{stock_id}/consensus", response_model=StockConsensus)

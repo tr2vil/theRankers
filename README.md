@@ -6,10 +6,14 @@
 
 - **애널리스트 랭킹** - 목표가 달성률, 초과수익률, 방향 정확도, 일관성 기반 100% 정량 평가
 - **종목별 컨센서스** - 매수/중립/매도 분포, 평균 목표가, 상승 여력
-- **리포트 검색** - 투자의견/종목/애널리스트별 필터링
-- **신뢰도 표시** - 애널리스트 아이콘 테두리 색상으로 신뢰도 시각화
+- **주가 차트** - Recharts 기반 종가 라인 차트 + 목표가 참조선
+- **애널리스트별 목표가 차트** - 도트 차트로 목표가 분포 시각화
+- **리포트 상세** - 메타데이터 + 주가 추적 (1m/3m/6m/12m) + 관련 리포트
+- **글로벌 검색** - 종목명 + 애널리스트 통합 검색 (디바운스 적용)
+- **반응형 레이아웃** - 데스크톱 테이블 + 모바일 카드
 - **커뮤니티** - 종목별/애널리스트별/증권사별 게시판
 - **회원 시스템** - 회원가입, 로그인, 게시글/댓글 작성
+- **자동 데이터 수집** - Celery 스케줄로 매일 리포트/주가/랭킹 자동 갱신
 
 ## 기술 스택
 
@@ -18,10 +22,11 @@
 | Backend | Python 3.12, FastAPI, SQLAlchemy 2.0 (async), Alembic |
 | Database | PostgreSQL 16, Redis 7 |
 | Auth | JWT (PyJWT + bcrypt) |
-| Frontend | Next.js 14, TypeScript, Tailwind CSS |
+| Frontend | Next.js 14, TypeScript, Tailwind CSS, Recharts |
+| Data | httpx (크롤링), pykrx (주가), Pandas/NumPy (분석) |
 | Task Queue | Celery + Redis |
 | Container | Docker Compose |
-| E2E Test | Playwright |
+| E2E Test | Playwright (71건) |
 
 ## 실행 방법
 
@@ -37,7 +42,12 @@ docker compose up --build -d
 
 ### DB 마이그레이션 (최초 1회)
 ```bash
-docker compose exec backend bash -c "cd /app && PYTHONPATH=/app alembic upgrade head"
+docker compose exec backend alembic upgrade head
+```
+
+### 데이터 수집 (최초 1회)
+```bash
+docker compose exec backend python scripts/sprint6_collect.py 30
 ```
 
 ### 접속
@@ -71,8 +81,8 @@ npx playwright test --reporter=html
 | redis | 6379 | Redis 7 |
 | backend | 8000 | FastAPI (uvicorn, hot-reload) |
 | frontend | 3000 | Next.js 14 (dev server) |
-| celery-worker | - | Celery 워커 |
-| celery-beat | - | Celery 스케줄러 |
+| celery-worker | - | Celery 워커 (수집/분석) |
+| celery-beat | - | Celery 스케줄러 (07:00 수집, 16:30 주가, 18:00 랭킹) |
 
 ## 환경 변수
 
@@ -88,12 +98,20 @@ ENVIRONMENT=development
 
 ```
 theRankers/
-├── backend/          # FastAPI API 서버
-├── frontend/         # Next.js 프론트엔드
-├── e2e/              # Playwright E2E 테스트
-├── .claude/          # Claude Code 스킬 정의
+├── backend/          # FastAPI API 서버 (7개 라우터, 21개 엔드포인트)
+│   ├── app/
+│   │   ├── api/      # auth, analysts, reports, stocks, rankings, boards, search
+│   │   ├── models/   # SQLAlchemy 모델 9개
+│   │   ├── services/ # collector(한경), analysis(스코어링), market(주가)
+│   │   └── tasks/    # Celery 태스크 (수집, 분석, 스케줄)
+│   ├── scripts/      # 데이터 수집 스크립트
+│   └── migrations/   # Alembic 마이그레이션
+├── frontend/         # Next.js 프론트엔드 (11개 페이지)
+├── e2e/              # Playwright E2E 테스트 (6개 파일, 71건)
+├── .claude/          # Claude Code 스킬 정의 (15개)
 ├── docker-compose.yml
 ├── CLAUDE.md         # AI 개발 가이드
+├── TODO.md           # 개발 로드맵
 └── README.md
 ```
 

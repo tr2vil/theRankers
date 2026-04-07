@@ -17,6 +17,7 @@
 - **Data Analysis**: Pandas / NumPy (성과 분석)
 - **Stock Price API**: pykrx (국내 주가 데이터)
 - **Frontend**: Next.js 14 (App Router) + TypeScript + Tailwind CSS
+- **Charts**: Recharts (주가 라인 차트, 컨센서스 차트)
 - **UI 스타일**: Apple 미니멀 디자인 (보라색 그라데이션 금지)
 - **Container**: Docker Compose (6개 서비스)
 - **Task Queue**: Celery + Redis (비동기 수집/분석 작업)
@@ -57,23 +58,24 @@ theRankers/
 │   │   │   ├── ranking.py     # 랭킹 스냅샷 (점수 분해 포함)
 │   │   │   └── board.py       # Board, Post, Comment
 │   │   ├── schemas/           # Pydantic 스키마 (7개)
-│   │   ├── api/               # API 라우터 (6개)
+│   │   ├── api/               # API 라우터 (7개)
 │   │   │   ├── auth.py        # 회원가입/로그인/토큰갱신/내정보
 │   │   │   ├── analysts.py    # 애널리스트 목록/상세
-│   │   │   ├── reports.py     # 리포트 목록/상세 (필터링)
-│   │   │   ├── stocks.py      # 종목 목록/상세/컨센서스
+│   │   │   ├── reports.py     # 리포트 목록/상세 (필터링/검색)
+│   │   │   ├── stocks.py      # 종목 목록/상세/컨센서스/주가
 │   │   │   ├── rankings.py    # 랭킹 (기간별)
-│   │   │   └── boards.py      # 게시판/게시글/댓글 CRUD
+│   │   │   ├── boards.py      # 게시판/게시글/댓글 CRUD
+│   │   │   └── search.py      # 통합 검색 (종목+애널리스트)
 │   │   ├── services/          # 비즈니스 로직
 │   │   │   ├── auth/          # 인증 서비스 + 의존성
-│   │   │   ├── collector/     # 데이터 수집 (미구현)
-│   │   │   ├── analysis/      # 성과 분석 (미구현)
-│   │   │   └── market/        # 시장 데이터 (미구현)
+│   │   │   ├── collector/     # 데이터 수집 (hankyung.py, storage.py)
+│   │   │   ├── analysis/      # 성과 분석 (scorer.py)
+│   │   │   └── market/        # 시장 데이터 (price.py)
 │   │   └── tasks/             # Celery 비동기 작업
 │   │       ├── __init__.py    # Celery 앱 설정
-│   │       ├── collect.py     # 수집 태스크 (미구현)
-│   │       ├── analyze.py     # 분석 태스크 (미구현)
-│   │       └── schedule.py    # 스케줄링 (미구현)
+│   │       ├── collect.py     # 수집 태스크
+│   │       ├── analyze.py     # 분석/주가/랭킹 태스크
+│   │       └── schedule.py    # Celery Beat 스케줄
 │   ├── migrations/            # Alembic 마이그레이션
 │   │   ├── env.py             # async 마이그레이션 설정
 │   │   └── versions/          # 마이그레이션 파일
@@ -81,12 +83,12 @@ theRankers/
 │   └── Dockerfile
 ├── frontend/                   # Next.js 14 프론트엔드
 │   ├── src/
-│   │   ├── app/               # App Router 페이지 (10개)
+│   │   ├── app/               # App Router 페이지 (11개)
 │   │   │   ├── page.tsx       # 메인 대시보드
-│   │   │   ├── rankings/      # 랭킹 페이지
+│   │   │   ├── rankings/      # 랭킹 페이지 (반응형: 데스크톱 테이블 + 모바일 카드)
 │   │   │   ├── analysts/      # 애널리스트 목록 + [id] 상세
-│   │   │   ├── stocks/        # 종목 목록 + [code] 상세
-│   │   │   ├── reports/       # 리포트 검색
+│   │   │   ├── stocks/        # 종목 목록 + [code] 상세 (Recharts 주가 차트)
+│   │   │   ├── reports/       # 리포트 검색 + [id] 상세 (주가 추적 차트)
 │   │   │   ├── boards/        # 커뮤니티 게시판 [slug]
 │   │   │   └── auth/          # 로그인 + 회원가입
 │   │   ├── components/
@@ -100,11 +102,13 @@ theRankers/
 │   └── Dockerfile
 ├── e2e/                        # Playwright E2E 테스트
 │   ├── playwright.config.ts
-│   └── tests/                 # 테스트 파일 (4개, 45건)
+│   └── tests/                 # 테스트 파일 (6개, 71건)
 │       ├── 01-backend-health.spec.ts
 │       ├── 02-auth-api.spec.ts
 │       ├── 03-frontend-pages.spec.ts
-│       └── 04-frontend-interaction.spec.ts
+│       ├── 04-frontend-interaction.spec.ts
+│       ├── 05-sprint4-backend.spec.ts
+│       └── 06-sprint5-api-integration.spec.ts
 ├── docker-compose.yml          # 6개 서비스 정의
 ├── .env                        # 환경 변수 (gitignore)
 ├── .gitignore
@@ -196,6 +200,7 @@ theRankers/
 | GET | /api/v1/stocks | 종목 목록 (검색/필터) | - |
 | GET | /api/v1/stocks/{id} | 종목 상세 | - |
 | GET | /api/v1/stocks/{id}/consensus | 종목 컨센서스 | - |
+| GET | /api/v1/stocks/{id}/prices | 종목 주가 (일별) | - |
 | GET | /api/v1/rankings | 랭킹 (기간/섹터) | - |
 | GET | /api/v1/boards | 게시판 목록 | - |
 | GET | /api/v1/boards/{slug}/posts | 게시글 목록 | - |
@@ -203,15 +208,19 @@ theRankers/
 | GET | /api/v1/boards/{slug}/posts/{id} | 게시글 상세 | - |
 | GET | /api/v1/boards/{slug}/posts/{id}/comments | 댓글 목록 | - |
 | POST | /api/v1/boards/{slug}/posts/{id}/comments | 댓글 작성 | Bearer |
+| GET | /api/v1/search | 통합 검색 (종목+애널리스트) | - |
 | GET | /health | 헬스체크 | - |
 
-## 데이터 수집 파이프라인 (미구현)
+## 데이터 수집 파이프라인 (구현 완료)
 ```
-[스케줄러] → [수집기] → [파서] → [DB 저장] → [주가 추적] → [성과 분석] → [랭킹 갱신]
-   매일        크롤링      정규화     리포트      일별/주별      월별         월별
+[Celery Beat] → [한경 크롤러] → [파서] → [DB 저장] → [pykrx 주가] → [추적 가격] → [랭킹 갱신]
+  매일 07:00      크롤링        정규화     리포트     매일 16:30    매일 17:00    매일 18:00
 ```
-- 수집 대상: 한경 컨센서스 (투자의견, 목표가, 애널리스트명, 증권사)
-- 주가 데이터: pykrx (수정주가)
+- 수집 대상: 한경 컨센서스 (`backend/app/services/collector/hankyung.py`)
+- 주가 데이터: pykrx (`backend/app/services/market/price.py`)
+- 스코어링: `backend/app/services/analysis/scorer.py`
+- 수집 스크립트: `backend/scripts/sprint6_collect.py` (수동 일괄 수집용)
+- 대상 종목: KOSPI 대형주 20개 (collect.py MAJOR_STOCKS)
 
 ## 개발 규칙
 1. **서비스 레이어 패턴**: API 라우터는 얇게, 비즈니스 로직은 services/에
@@ -274,10 +283,13 @@ theRankers/
 | Docker Compose (6개 서비스) | 구현 완료 |
 | DB 모델 9개 + Alembic 마이그레이션 | 구현 완료 |
 | Auth API (JWT) | 구현 완료 |
-| 핵심 API 6개 (analysts, reports, stocks, rankings, boards, auth) | 구현 완료 |
-| Frontend 10개 페이지 (Apple 스타일) | 구현 완료 (API 연동) |
-| Playwright E2E 테스트 65건 | 구현 완료 (ALL PASS) |
-| 데이터 수집 파이프라인 | 구현 완료 |
-| 스코어링 엔진 | 구현 완료 |
-| Frontend API 연동 | 구현 완료 |
-| 실제 데이터 연동 | **미구현** (가짜 데이터 → 실제 데이터 전환) |
+| Backend API 21개 엔드포인트 (7개 라우터) | 구현 완료 |
+| Frontend 11개 페이지 (API 연동 완료) | 구현 완료 |
+| 데이터 수집 파이프라인 (한경 크롤러 + pykrx) | 구현 완료 |
+| 스코어링 엔진 (4개 지표) | 구현 완료 |
+| Celery 자동 스케줄 (수집/주가/추적/랭킹) | 구현 완료 |
+| 실제 데이터 전환 (20개 종목) | 구현 완료 |
+| 주가 차트 (Recharts) + 컨센서스 시각화 | 구현 완료 |
+| 글로벌 검색 (종목+애널리스트 통합) | 구현 완료 |
+| 반응형 레이아웃 (랭킹 모바일 카드) | 구현 완료 |
+| Playwright E2E 테스트 71건 | ALL PASS |

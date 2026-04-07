@@ -87,6 +87,18 @@ export interface PaginatedResponse<T> {
   size: number;
 }
 
+export interface ReportDetail extends Report {
+  price_1m: number | null;
+  price_3m: number | null;
+  price_6m: number | null;
+  price_12m: number | null;
+  excess_return_1m: number | null;
+  excess_return_6m: number | null;
+  excess_return_12m: number | null;
+  achieved_date: string | null;
+  source_url: string | null;
+}
+
 export interface StockConsensus {
   stock: Stock;
   buy_count: number;

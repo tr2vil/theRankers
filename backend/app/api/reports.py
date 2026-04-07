@@ -8,7 +8,7 @@ from app.database import get_db
 from app.models.report import Report
 from app.models.analyst import Analyst
 from app.models.stock import Stock
-from app.schemas.report import ReportResponse, ReportListResponse
+from app.schemas.report import ReportResponse, ReportDetailResponse, ReportListResponse
 
 router = APIRouter()
 
@@ -85,7 +85,7 @@ async def list_reports(
     )
 
 
-@router.get("/{report_id}", response_model=ReportResponse)
+@router.get("/{report_id}", response_model=ReportDetailResponse)
 async def get_report(report_id: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(
         select(Report, Analyst.name, Analyst.firm, Stock.name, Stock.code)
@@ -98,7 +98,7 @@ async def get_report(report_id: int, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Report not found")
 
     report, analyst_name, analyst_firm, stock_name, stock_code = row
-    resp = ReportResponse.model_validate(report)
+    resp = ReportDetailResponse.model_validate(report)
     resp.analyst_name = analyst_name
     resp.analyst_firm = analyst_firm
     resp.stock_name = stock_name

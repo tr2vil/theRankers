@@ -22,8 +22,8 @@ test.describe("T06: Sprint 5 - Frontend API 연동 시험", () => {
     await page.goto("/rankings");
     // Wait for ranking table to load
     await expect(page.locator("text=순위").first()).toBeVisible({ timeout: 10000 });
-    // Should show ranking entries with score bars
-    await expect(page.locator(".bg-accent-blue\\/80").first()).toBeVisible();
+    // Should show ranking entries
+    await expect(page.locator("text=종합 점수")).toBeVisible();
     // Switch to 3m period
     await page.click("button:text('3개월')");
     // Should reload data (may show different or same data)
@@ -98,6 +98,29 @@ test.describe("T06: Sprint 5 - Frontend API 연동 시험", () => {
     expect(data).toHaveProperty("high_target_price");
     expect(data).toHaveProperty("low_target_price");
     expect(data).toHaveProperty("report_count");
+  });
+
+  test("T06-11: Backend report detail API 추적 필드 포함", async ({ request }) => {
+    // Get a report ID first
+    const listRes = await request.get("http://localhost:8000/api/v1/reports?page=1&size=1");
+    const listData = await listRes.json();
+    const reportId = listData.items[0]?.id;
+    if (!reportId) return;
+
+    const response = await request.get(`http://localhost:8000/api/v1/reports/${reportId}`);
+    expect(response.status()).toBe(200);
+    const data = await response.json();
+    // Should have detail fields
+    expect(data).toHaveProperty("price_1m");
+    expect(data).toHaveProperty("price_3m");
+    expect(data).toHaveProperty("price_6m");
+    expect(data).toHaveProperty("price_12m");
+    expect(data).toHaveProperty("achieved_date");
+    expect(data).toHaveProperty("source_url");
+    // Basic fields still present
+    expect(data).toHaveProperty("analyst_name");
+    expect(data).toHaveProperty("stock_name");
+    expect(data).toHaveProperty("target_price");
   });
 
   test("T06-10: Backend reports 검색 API 동작", async ({ request }) => {

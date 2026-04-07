@@ -7,7 +7,7 @@
 
 ## Playwright E2E 테스트 (e2e/tests/)
 
-최종 실행: 2026-04-07 | 결과: **65/65 PASS**
+최종 실행: 2026-04-07 | 결과: **68/68 PASS**
 
 ### T01: Backend API 헬스체크 (01-backend-health.spec.ts)
 | ID | 시험 항목 | 상태 |
@@ -47,6 +47,7 @@
 | T03-11 | 커뮤니티 게시판 페이지 로딩 | FIXED |
 | T03-12 | 로그인 페이지 로딩 | PASS |
 | T03-13 | 회원가입 페이지 로딩 | PASS |
+| T03-14 | 리포트 상세 페이지 로딩 (API) | PASS |
 
 ### T04: Frontend 인터랙션 (04-frontend-interaction.spec.ts)
 | ID | 시험 항목 | 상태 |
@@ -69,6 +70,7 @@
 | T04-16 | 게시판 - 글쓰기 폼 토글 | PASS |
 | T04-17 | 종목 - 섹터 필터 | PASS |
 | T04-18 | 종목 상세 - 애널리스트 신뢰도 테두리 | PASS |
+| T04-19 | 리포트 목록 → 상세 페이지 이동 | PASS |
 
 ### T05: Sprint 4 Backend 기능 시험 (05-sprint4-backend.spec.ts)
 | ID | 시험 항목 | 상태 |
@@ -99,6 +101,7 @@
 | T06-8 | 게시판 - 보드 탭 API 연동 | PASS |
 | T06-9 | Backend consensus API 정상 응답 | PASS |
 | T06-10 | Backend reports 검색 API 동작 | PASS |
+| T06-11 | Backend report detail API 추적 필드 포함 | PASS |
 
 ---
 

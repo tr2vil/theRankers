@@ -11,7 +11,9 @@ import app.models  # noqa: F401 - import all models for autogenerate
 
 config = context.config
 settings = get_settings()
-config.set_main_option("sqlalchemy.url", settings.database_url)
+# Escape % for configparser interpolation
+db_url = settings.get_database_url().replace("%", "%%")
+config.set_main_option("sqlalchemy.url", db_url)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)

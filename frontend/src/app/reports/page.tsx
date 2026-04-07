@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import { reportAPI } from "@/lib/api";
 import type { Report, PaginatedResponse } from "@/types";
 
@@ -101,12 +102,13 @@ export default function ReportsPage() {
                   ? report.target_price - report.previous_target_price
                   : 0;
                 return (
-                  <div
+                  <Link
+                    href={`/reports/${report.id}`}
                     key={report.id}
-                    className="grid grid-cols-[1fr_140px_80px_140px_100px] gap-4 px-6 py-4 items-center border-b border-border-secondary last:border-0 hover:bg-surface-tertiary transition-colors min-w-[600px]"
+                    className="grid grid-cols-[1fr_140px_80px_140px_100px] gap-4 px-6 py-4 items-center border-b border-border-secondary last:border-0 hover:bg-surface-tertiary transition-colors min-w-[600px] group"
                   >
                     <div>
-                      <span className="text-body font-semibold text-text-primary">{report.stock_name}</span>
+                      <span className="text-body font-semibold text-text-primary group-hover:text-accent-blue transition-colors">{report.stock_name}</span>
                       <span className="text-caption text-text-tertiary ml-2">{report.stock_code}</span>
                     </div>
                     <div>
@@ -125,7 +127,7 @@ export default function ReportsPage() {
                       )}
                     </div>
                     <span className="text-body text-text-tertiary text-right">{report.report_date}</span>
-                  </div>
+                  </Link>
                 );
               })}
             </div>

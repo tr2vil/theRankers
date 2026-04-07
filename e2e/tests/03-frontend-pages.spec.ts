@@ -85,6 +85,22 @@ test.describe("T03: Frontend 페이지 로딩 시험", () => {
     await expect(page.locator("button:text('글쓰기')")).toBeVisible();
   });
 
+  test("T03-14: 리포트 상세 페이지 로딩 (API)", async ({ page }) => {
+    // First get a valid report ID
+    const reportsRes = await page.request.get("http://localhost:8000/api/v1/reports?page=1&size=1");
+    const reportsData = await reportsRes.json();
+    const reportId = reportsData.items[0]?.id;
+    if (!reportId) return;
+
+    await page.goto(`/reports/${reportId}`);
+    // Should show report header with opinion badge
+    await expect(page.locator("text=목표가").first()).toBeVisible({ timeout: 10000 });
+    // Should show key metrics
+    await expect(page.locator("text=발행일 주가")).toBeVisible();
+    await expect(page.locator("text=목표가 달성")).toBeVisible();
+    await expect(page.locator("text=투자의견")).toBeVisible();
+  });
+
   test("T03-12: 로그인 페이지 로딩", async ({ page }) => {
     await page.goto("/auth/login");
     await expect(page.locator("h1:text('로그인')")).toBeVisible();

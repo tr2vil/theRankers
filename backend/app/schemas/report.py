@@ -26,6 +26,19 @@ class ReportResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class ReportDetailResponse(ReportResponse):
+    """리포트 상세 응답 - 추적 가격, 초과수익률 등 포함."""
+    price_1m: int | None = None
+    price_3m: int | None = None
+    price_6m: int | None = None
+    price_12m: int | None = None
+    excess_return_1m: float | None = None
+    excess_return_6m: float | None = None
+    excess_return_12m: float | None = None
+    achieved_date: date | None = None
+    source_url: str | None = None
+
+
 class ReportListResponse(BaseModel):
     items: list[ReportResponse]
     total: int

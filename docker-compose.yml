@@ -34,7 +34,11 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql+asyncpg://therankers:${POSTGRES_PASSWORD:-therankers_dev}@postgres:5432/therankers
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=therankers
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-therankers_dev}
+      - DB_NAME=therankers
       - REDIS_URL=redis://redis:6379/0
       - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production}
       - ENVIRONMENT=development
@@ -52,7 +56,11 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     environment:
-      - DATABASE_URL=postgresql+asyncpg://therankers:${POSTGRES_PASSWORD:-therankers_dev}@postgres:5432/therankers
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=therankers
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-therankers_dev}
+      - DB_NAME=therankers
       - REDIS_URL=redis://redis:6379/0
       - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production}
       - PYTHONPATH=/app
@@ -70,7 +78,11 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     environment:
-      - DATABASE_URL=postgresql+asyncpg://therankers:${POSTGRES_PASSWORD:-therankers_dev}@postgres:5432/therankers
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=therankers
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-therankers_dev}
+      - DB_NAME=therankers
       - REDIS_URL=redis://redis:6379/0
       - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production}
       - PYTHONPATH=/app

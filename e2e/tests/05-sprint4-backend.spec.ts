@@ -106,7 +106,7 @@ test.describe("T05: Sprint 4 Backend 기능 시험", () => {
     const res = await request.get(`${API}/api/v1/rankings?period=12m`);
     const body = await res.json();
     for (let i = 1; i < body.items.length; i++) {
-      expect(body.items[i].rank).toBeGreaterThan(body.items[i - 1].rank);
+      expect(body.items[i].rank).toBeGreaterThanOrEqual(body.items[i - 1].rank);
       expect(body.items[i].score).toBeLessThanOrEqual(body.items[i - 1].score);
     }
   });

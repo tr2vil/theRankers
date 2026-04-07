@@ -6,7 +6,8 @@ from app.database import get_db
 from app.models.stock import Stock
 from app.models.report import Report
 from app.models.price import Price
-from app.schemas.stock import StockResponse, StockListResponse, StockConsensus, PricePoint
+from app.models.analyst import Analyst
+from app.schemas.stock import StockResponse, StockListResponse, StockConsensus, StockForecast, AnalystOpinion, PricePoint
 
 router = APIRouter()
 
@@ -74,6 +75,72 @@ async def get_stock_prices(
     )
     prices = list(reversed(result.scalars().all()))
     return [PricePoint.model_validate(p) for p in prices]
+
+
+@router.get("/{stock_id}/forecast", response_model=StockForecast)
+async def get_stock_forecast(stock_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Stock).where(Stock.id == stock_id))
+    stock = result.scalar_one_or_none()
+    if not stock:
+        raise HTTPException(status_code=404, detail="Stock not found")
+
+    # Get reports with analyst info
+    report_result = await db.execute(
+        select(Report, Analyst)
+        .join(Analyst, Report.analyst_id == Analyst.id)
+        .where(Report.stock_id == stock_id)
+        .order_by(Report.report_date.desc())
+    )
+    rows = report_result.all()
+
+    opinions = []
+    buy_count = hold_count = sell_count = 0
+    target_prices = []
+
+    for report, analyst in rows:
+        if report.opinion == "매수":
+            buy_count += 1
+        elif report.opinion == "중립":
+            hold_count += 1
+        elif report.opinion == "매도":
+            sell_count += 1
+        target_prices.append(report.target_price)
+
+        opinions.append(AnalystOpinion(
+            report_id=report.id,
+            analyst_id=analyst.id,
+            analyst_name=analyst.name,
+            analyst_firm=analyst.firm,
+            opinion=report.opinion,
+            target_price=report.target_price,
+            report_date=str(report.report_date),
+            ranking_score=analyst.ranking_score,
+            accuracy_rate=analyst.accuracy_rate,
+            avg_return=analyst.avg_return,
+            total_reports=analyst.total_reports,
+        ))
+
+    total = buy_count + hold_count + sell_count
+    avg_tp = sum(target_prices) / len(target_prices) if target_prices else 0
+    high_tp = max(target_prices) if target_prices else None
+    low_tp = min(target_prices) if target_prices else None
+
+    # Best analyst = highest ranking_score among those covering this stock
+    best = max(opinions, key=lambda o: o.ranking_score) if opinions else None
+
+    return StockForecast(
+        stock=StockResponse.model_validate(stock),
+        buy_count=buy_count,
+        hold_count=hold_count,
+        sell_count=sell_count,
+        avg_target_price=avg_tp,
+        high_target_price=high_tp,
+        low_target_price=low_tp,
+        current_price=None,
+        report_count=total,
+        opinions=opinions,
+        best_analyst=best,
+    )
 
 
 @router.get("/{stock_id}/consensus", response_model=StockConsensus)

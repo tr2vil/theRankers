@@ -42,15 +42,15 @@ test.describe("T06: Sprint 5 - Frontend API 연동 시험", () => {
     await expect(page.locator("text=적중률")).toBeVisible();
   });
 
-  test("T06-5: 종목 상세 - Consensus API 데이터", async ({ page }) => {
+  test("T06-5: 종목 상세 - Forecast 데이터", async ({ page }) => {
     await page.goto("/stocks/005930");
     await expect(page.getByRole("heading", { name: "삼성전자" })).toBeVisible({ timeout: 10000 });
-    // Consensus data from API
-    await expect(page.locator("text=투자의견 분포")).toBeVisible();
-    // Buy count should be visible (green bar)
-    await expect(page.locator(".bg-accent-green").first()).toBeVisible();
+    // Consensus section
+    await expect(page.locator("text=애널리스트 컨센서스")).toBeVisible();
     // Target price range
-    await expect(page.locator("text=평균").first()).toBeVisible();
+    await expect(page.locator("text=목표가 범위")).toBeVisible();
+    // Analyst table
+    await expect(page.locator("text=애널리스트 의견")).toBeVisible();
   });
 
   test("T06-6: 리포트 페이지 - 페이지네이션", async ({ page }) => {
@@ -131,6 +131,20 @@ test.describe("T06: Sprint 5 - Frontend API 연동 시험", () => {
     expect(data[0]).toHaveProperty("date");
     expect(data[0]).toHaveProperty("close_price");
     expect(data[0]).toHaveProperty("volume");
+  });
+
+  test("T06-14: Backend forecast API 응답", async ({ request }) => {
+    const response = await request.get("http://localhost:8000/api/v1/stocks/1/forecast");
+    expect(response.status()).toBe(200);
+    const data = await response.json();
+    expect(data).toHaveProperty("stock");
+    expect(data).toHaveProperty("buy_count");
+    expect(data).toHaveProperty("opinions");
+    expect(data).toHaveProperty("best_analyst");
+    expect(data).toHaveProperty("avg_target_price");
+    expect(data.opinions.length).toBeGreaterThan(0);
+    expect(data.opinions[0]).toHaveProperty("ranking_score");
+    expect(data.opinions[0]).toHaveProperty("accuracy_rate");
   });
 
   test("T06-13: Backend 통합 검색 API 동작", async ({ request }) => {

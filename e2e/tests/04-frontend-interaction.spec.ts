@@ -152,11 +152,15 @@ test.describe("T04: Frontend 인터랙션 시험", () => {
     await expect(page.locator("text=셀트리온")).toBeVisible({ timeout: 10000 });
   });
 
-  test("T04-18: 종목 상세 - 애널리스트 신뢰도 테두리 표시", async ({ page }) => {
+  test("T04-18: 종목 상세 - All/Top 애널리스트 토글", async ({ page }) => {
     await page.goto("/stocks/005930");
-    // 신뢰도 설명 텍스트
-    await expect(page.locator("text=테두리 색상은 신뢰도")).toBeVisible({ timeout: 10000 });
-    // 애널리스트 의견 목록 (at least one entry with 매수 badge)
-    await expect(page.locator("text=매수").first()).toBeVisible();
+    await expect(page.locator("text=애널리스트 의견")).toBeVisible({ timeout: 10000 });
+    // All/Top toggle should exist
+    await expect(page.locator("button:text('전체')")).toBeVisible();
+    await expect(page.locator("button:text('Top')")).toBeVisible();
+    // Click Top
+    await page.click("button:text('Top')");
+    // Should still show analyst opinions section
+    await expect(page.locator("text=애널리스트 의견")).toBeVisible();
   });
 });

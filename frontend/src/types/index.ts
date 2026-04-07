@@ -99,6 +99,34 @@ export interface ReportDetail extends Report {
   source_url: string | null;
 }
 
+export interface AnalystOpinion {
+  report_id: number;
+  analyst_id: number;
+  analyst_name: string;
+  analyst_firm: string;
+  opinion: string;
+  target_price: number;
+  report_date: string;
+  ranking_score: number;
+  accuracy_rate: number;
+  avg_return: number;
+  total_reports: number;
+}
+
+export interface StockForecast {
+  stock: Stock;
+  buy_count: number;
+  hold_count: number;
+  sell_count: number;
+  avg_target_price: number;
+  high_target_price: number | null;
+  low_target_price: number | null;
+  current_price: number | null;
+  report_count: number;
+  opinions: AnalystOpinion[];
+  best_analyst: AnalystOpinion | null;
+}
+
 export interface PricePoint {
   date: string;
   close_price: number;

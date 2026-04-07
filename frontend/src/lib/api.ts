@@ -67,6 +67,7 @@ export const stockAPI = {
   },
   get: (id: number) => fetchAPI(`/api/v1/stocks/${id}`),
   consensus: (id: number) => fetchAPI(`/api/v1/stocks/${id}/consensus`),
+  forecast: (id: number) => fetchAPI(`/api/v1/stocks/${id}/forecast`),
   prices: (id: number, days: number = 30) => fetchAPI(`/api/v1/stocks/${id}/prices?days=${days}`),
 };
 

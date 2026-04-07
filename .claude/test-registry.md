@@ -7,7 +7,7 @@
 
 ## Playwright E2E 테스트 (e2e/tests/)
 
-최종 실행: 2026-04-07 | 결과: **71/71 PASS**
+최종 실행: 2026-04-07 | 결과: **72/72 PASS**
 
 ### T01: Backend API 헬스체크 (01-backend-health.spec.ts)
 | ID | 시험 항목 | 상태 |
@@ -105,6 +105,7 @@
 | T06-11 | Backend report detail API 추적 필드 포함 | PASS |
 | T06-12 | Backend 주가 API 응답 | PASS |
 | T06-13 | Backend 통합 검색 API 동작 | PASS |
+| T06-14 | Backend forecast API 응답 | PASS |
 
 ---
 

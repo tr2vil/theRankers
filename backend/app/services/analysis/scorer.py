@@ -12,7 +12,7 @@ import logging
 from datetime import date, timedelta
 from dataclasses import dataclass
 
-from sqlalchemy import select, func, and_
+from sqlalchemy import select, delete, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.analyst import Analyst
@@ -210,7 +210,7 @@ async def calculate_and_save_rankings(db: AsyncSession, period: str = "12m") -> 
 
     # 기존 랭킹 삭제 (같은 기간, 같은 날짜)
     await db.execute(
-        select(Ranking)
+        delete(Ranking)
         .where(Ranking.period == period, Ranking.calculated_at == today)
     )
 

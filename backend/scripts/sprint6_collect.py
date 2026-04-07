@@ -21,7 +21,7 @@ from app.models.stock import Stock
 from app.models.board import Board
 from app.services.collector.hankyung import fetch_stock_reports
 from app.services.collector.storage import save_reports, get_or_create_stock
-from app.services.market.price import save_prices, update_report_tracked_prices
+from app.services.market.price import save_prices, update_report_tracked_prices, calculate_excess_returns
 from app.services.analysis.scorer import calculate_and_save_rankings
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -109,6 +109,15 @@ async def step3_update_tracked_prices():
     return updated
 
 
+async def step3b_calculate_excess_returns():
+    """초과수익률 계산 (섹터 대비)."""
+    logger.info("=== Step 3b: 초과수익률 계산 ===")
+    async with AsyncSessionLocal() as db:
+        updated = await calculate_excess_returns(db)
+    logger.info(f"=== Step 3b 완료: {updated}건 초과수익률 업데이트 ===")
+    return updated
+
+
 async def step4_calculate_rankings():
     """스코어링 재계산."""
     logger.info("=== Step 4: 랭킹 재계산 ===")
@@ -154,6 +163,7 @@ async def main():
     await step1_collect_reports()
     await step2_collect_prices(days_back)
     await step3_update_tracked_prices()
+    await step3b_calculate_excess_returns()
     await step4_calculate_rankings()
     await step5_create_boards()
 

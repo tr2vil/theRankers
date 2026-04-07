@@ -6,7 +6,7 @@ from datetime import date, timedelta
 
 from app.tasks import celery_app
 from app.database import AsyncSessionLocal
-from app.services.market.price import save_prices, update_report_tracked_prices
+from app.services.market.price import save_prices, update_report_tracked_prices, calculate_excess_returns
 from app.services.analysis.scorer import calculate_and_save_rankings
 from app.models.stock import Stock
 from sqlalchemy import select
@@ -52,7 +52,12 @@ def update_tracked_prices():
 
 async def _update_tracked() -> int:
     async with AsyncSessionLocal() as db:
-        return await update_report_tracked_prices(db)
+        tracked = await update_report_tracked_prices(db)
+    # 추적 가격 업데이트 후 초과수익률도 계산
+    async with AsyncSessionLocal() as db:
+        excess = await calculate_excess_returns(db)
+    logger.info(f"추적 가격 {tracked}건, 초과수익률 {excess}건 업데이트")
+    return tracked + excess
 
 
 @celery_app.task(name="calculate_rankings")

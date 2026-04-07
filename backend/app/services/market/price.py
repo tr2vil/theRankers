@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.price import Price
 from app.models.stock import Stock
 from app.models.report import Report
+from app.models.analyst import Analyst
 
 logger = logging.getLogger(__name__)
 
@@ -191,3 +192,58 @@ async def _check_target_achieved(
         return None
 
     return result.scalar_one_or_none()
+
+
+async def calculate_excess_returns(db: AsyncSession) -> int:
+    """리포트의 초과수익률(섹터 대비)을 계산한다.
+
+    초과수익률 = 종목 수익률 - 같은 GICS 섹터 평균 수익률
+    """
+    updated = 0
+
+    periods = [
+        ("excess_return_1m", "price_1m"),
+        ("excess_return_3m", "price_3m"),
+        ("excess_return_6m", "price_6m"),
+        ("excess_return_12m", "price_12m"),
+    ]
+
+    # 모든 리포트 + 종목 정보 로드
+    result = await db.execute(
+        select(Report, Stock)
+        .join(Stock, Report.stock_id == Stock.id)
+    )
+    rows = result.all()
+
+    for excess_field, price_field in periods:
+        # 섹터별 수익률 수집
+        sector_returns: dict[str, list[float]] = {}
+        report_data: list[tuple[Report, str, float]] = []  # (report, sector_code, stock_return)
+
+        for report, stock in rows:
+            future_price = getattr(report, price_field)
+            if future_price is None or not report.price_at_report:
+                continue
+            stock_return = (future_price - report.price_at_report) / report.price_at_report
+            sector = stock.gics_sector_code or "99"
+            sector_returns.setdefault(sector, []).append(stock_return)
+            report_data.append((report, sector, stock_return))
+
+        # 섹터별 평균
+        sector_avg: dict[str, float] = {}
+        for sector, returns in sector_returns.items():
+            sector_avg[sector] = sum(returns) / len(returns)
+
+        # 초과수익률 = 종목 수익률 - 섹터 평균 수익률
+        for report, sector, stock_return in report_data:
+            if getattr(report, excess_field) is not None:
+                continue
+            excess = stock_return - sector_avg.get(sector, 0)
+            setattr(report, excess_field, round(excess, 6))
+            updated += 1
+
+    if updated:
+        await db.commit()
+        logger.info(f"{updated}건 초과수익률 업데이트")
+
+    return updated
